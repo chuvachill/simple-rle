@@ -1,19 +1,37 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int compress();
+int compress(FILE *, FILE *);
+int add_header(FILE *);
+int add_checksum(FILE *);
+
+
 int decompress();
+
+
 
 int copybinf(FILE *, FILE *);
 int readbinf(FILE *, int);
 
-int main() {
-    FILE *in = fopen("./test/finp.tst", "rb");
-    FILE *out = fopen("./test/finp.rle", "wb");
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s [FILE]...\n", argv[0]);
+        return EXIT_FAILURE;
+    }
 
-    copybinf(in, out);
+    for (int i = 1; i < argc; i++) {
+        FILE *in = fopen(argv[i], "rb");
+        if (in == NULL) {
+            perror("ERROR OPENING FILE");
+            return EXIT_FAILURE;
+        }
     
-    fclose(in);
+        printf("\x1b[31m%s\x1b[0m:\n", argv[i]);
+        readbinf(in, 16);
+        
+        fclose(in);
+    }
+
     return EXIT_SUCCESS;
 }
 
@@ -42,11 +60,6 @@ int copybinf(FILE *in, FILE *out) {
 
 int readbinf(FILE *file, const int maxcol) {
     int col = maxcol;
-
-    if (file == NULL) {
-        perror("Error opening file\n");
-        return EXIT_FAILURE;
-    }
 
     unsigned char byte;
     while (fread(&byte, sizeof(byte), 1, file)) {
