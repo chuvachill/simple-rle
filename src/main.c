@@ -4,16 +4,39 @@
 int compress();
 int decompress();
 
+int copybinf(FILE *, FILE *);
 int readbinf(FILE *, int);
 
 int main() {
-    FILE *file = fopen("./test/finp.tst", "rb");
+    FILE *in = fopen("./test/finp.tst", "rb");
+    FILE *out = fopen("./test/finp.rle", "wb");
 
-    if (readbinf(file, 16))
-        perror("Error reading file\n");
-
+    copybinf(in, out);
     
-    fclose(file);
+    fclose(in);
+    return EXIT_SUCCESS;
+}
+
+int copybinf(FILE *in, FILE *out) {
+    if (in == NULL) {
+        perror("Error opening input file\n");
+        return EXIT_FAILURE;
+    }
+    else if (out == NULL) {
+        perror("Error opening output file\n");
+        return EXIT_FAILURE;
+    }
+
+    unsigned char byte;
+    while (fread(&byte, sizeof(byte), 1, in)) {
+        fwrite(&byte, sizeof(byte), 1, out);
+    }
+
+    if (ferror(in) || ferror(out)) {
+        perror("Error writing into file\n");
+        return EXIT_FAILURE;
+    }
+
     return EXIT_SUCCESS;
 }
 
@@ -36,8 +59,10 @@ int readbinf(FILE *file, const int maxcol) {
     }
     printf("\n");
 
-    if (ferror(file))
+    if (ferror(file)) {
         perror("Error reading file\n");
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
