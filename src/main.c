@@ -10,7 +10,6 @@ int decompress();
 
 
 
-int copybinf(FILE *, FILE *);
 int readbinf(FILE *, int);
 
 int main(int argc, char* argv[]) {
@@ -30,29 +29,6 @@ int main(int argc, char* argv[]) {
         readbinf(in, 16);
         
         fclose(in);
-    }
-
-    return EXIT_SUCCESS;
-}
-
-int copybinf(FILE *in, FILE *out) {
-    if (in == NULL) {
-        perror("Error opening input file\n");
-        return EXIT_FAILURE;
-    }
-    else if (out == NULL) {
-        perror("Error opening output file\n");
-        return EXIT_FAILURE;
-    }
-
-    unsigned char byte;
-    while (fread(&byte, sizeof(byte), 1, in)) {
-        fwrite(&byte, sizeof(byte), 1, out);
-    }
-
-    if (ferror(in) || ferror(out)) {
-        perror("Error writing into file\n");
-        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
