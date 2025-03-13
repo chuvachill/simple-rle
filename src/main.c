@@ -16,46 +16,54 @@ void change_extension(char *, size_t, const char *, const char *);
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        printf("Usage: %s [FILE]...\n", argv[0]);
+        printf("Usage: %s FILE...\n", argv[0]);
         return EXIT_FAILURE;
     }
 
     for (int i = 1; i < argc; i++) {
+        /* OPEN INPUT FILE */
         FILE *in = fopen(argv[i], "rb");
         if (in == NULL) {
             fprintf(stderr, "%s: No such file\n", argv[i]);            
             return EXIT_FAILURE;
         }
 
-        char outname[FILENAME];
-        change_extension(outname, FILENAME, argv[i], ".rle");
+        /* CREATE AND OPEN OUTPUT FILE */
+        char new_filename[FILENAME];
+        change_extension(new_filename, FILENAME, argv[i], ".rle");
 
-        FILE *out = fopen(outname, "wb");
+        FILE *out = fopen(new_filename, "wb");
         if (out == NULL) {
             fprintf(stderr, "Error occured while compressing\n");
             return EXIT_FAILURE;
         }
     
-        printf("\x1b[31m%s\x1b[0m:\n", argv[i]);
-        // read_binary(in, 16);
+        /* READ INPUT FILE BYTE BY BYTE */
+        read_binary(in, 16);
         
         fclose(in);
     }
-
+    
     return EXIT_SUCCESS;
 }
 
 int read_binary(FILE *file, const int maxcol) {
     int col = maxcol;
-
+    
     unsigned char byte;
+    unsigned char prevb = 0;
     while (fread(&byte, sizeof(byte), 1, file)) {
-        printf("%02x ", byte);
+        if (byte == prevb)
+            printf("\x1b[31m%02x \x1b[0m", byte);
+        else
+            printf("%02x ", byte);
 
         if (--col < 1) {
             col = maxcol;
             printf("\n");
         }
+
+        prevb = byte;
     }
     printf("\n");
 
