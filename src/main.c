@@ -1,8 +1,12 @@
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #define FILENAME 256
+#define COLOR_GREEN "\033[32m"
+#define COLOR_RED   "\033[31m"
+#define COLOR_RESET "\033[0m"
 
 int compress(FILE *, FILE *);
 int add_header(FILE *);
@@ -11,7 +15,7 @@ int add_checksum(FILE *);
 int decompress();
 
 
-int read_binary(FILE *, int);
+int read_binary(FILE *);
 void change_extension(char *, size_t, const char *, const char *);
 
 int main(int argc, char* argv[]) {
@@ -39,7 +43,7 @@ int main(int argc, char* argv[]) {
         }
     
         /* READ INPUT FILE BYTE BY BYTE */
-        read_binary(in, 16);
+        read_binary(in);
         
         fclose(in);
     }
@@ -47,25 +51,31 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-int read_binary(FILE *file, const int maxcol) {
-    int col = maxcol;
+int read_binary(FILE *file) {
+    bool isrepeated = false;
     
-    unsigned char byte;
-    unsigned char prevb = 0;
+    unsigned char byte, prevb;
+
+    unsigned int count = 1;
     while (fread(&byte, sizeof(byte), 1, file)) {
-        if (byte == prevb)
-            printf("\x1b[31m%02x \x1b[0m", byte);
-        else
-            printf("%02x ", byte);
-
-        if (--col < 1) {
-            col = maxcol;
-            printf("\n");
+        switch (isrepeated) {
+        case false:
+            if (byte == prevb) {
+                isrepeated = true;
+                ++count;
+            } else printf("%02x ", byte);
+            break;
+        case true:
+            if (byte != prevb) {
+                isrepeated = false;
+                printf(COLOR_RED "%u" COLOR_GREEN "%02x" COLOR_RESET " ", count, prevb);
+                printf("%02x ", byte);
+                count = 1;
+            } else ++count;
+            break;
         }
-
         prevb = byte;
     }
-    printf("\n");
 
     if (ferror(file)) {
         perror("Error reading file\n");
