@@ -15,10 +15,7 @@
 void change_extension(char *, size_t, const char *, const char *);
 
 int compress(const char *);
-int add_header(FILE *);
-int add_checksum(FILE *);
-
-int decompress();
+int decompress(const char*, const char *);
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -26,9 +23,11 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    for (int i = 1; i < argc; i++)
-        compress(argv[i]);
+    // for (int i = 1; i < argc; i++)
+    //     compress(argv[i]);
     
+    decompress(argv[1], argv[2]);
+
     return EXIT_SUCCESS;
 }
 
@@ -206,6 +205,43 @@ int compress(const char* ifname) {
         fwrite(bytes, sizeof(bytes[0]), 1, out);
     }
 
+    return EXIT_SUCCESS;
+}
+
+int decompress(const char* ifname, const char* ofname) {
+    /* OPEN INPUT FILE */
+    FILE *in = fopen(ifname, "rb");
+    if (in == NULL) {
+        fprintf(stderr, "%s: No such file\n", ifname);            
+        return EXIT_FAILURE;
+    }
+    
+    /* OPEN OUTPUT FILE */
+    FILE *out = fopen(ofname, "wb");
+    if (out == NULL) {
+        fprintf(stderr, "%s: No such file\n", ofname);            
+        return EXIT_FAILURE;
+    }
+
+    unsigned char byte;
+    signed char count;                       // COUNT (REPEATED|UNIQUE) BYTES WHILE (POSITIVE|NEGATIVE)
+
+    /* READ INPUT FILE BYTE BY BYTE */
+    while (fread(&byte, sizeof(byte), 1, in)) {
+        count = byte;
+        if (count > 0) {
+            fread(&byte, sizeof(byte), 1, in);
+            for (int i = count; i > 0; --i)
+                /* WRITE COMPRESSED */
+                fwrite(&byte, sizeof(byte), 1, out);
+        } else if (count < 0) {
+            for (int i = count; i < 0; ++i) {
+                /* WRITE UNCOMPRESSED */
+                fread(&byte, sizeof(byte), 1, in);
+                fwrite(&byte, sizeof(byte), 1, out);
+            }
+        }
+    }
     return EXIT_SUCCESS;
 }
 
